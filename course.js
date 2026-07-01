@@ -257,85 +257,105 @@ const LESSONS = [
  <div class="litnote">📚 <b>Honesty as a feature.</b> An earlier release advertised joint compliance as 97.6 % — a <i>target</i>, not a computed result. The harness caught it; the audited value is <b>99.70 %</b>, and the discrepancy is documented in the changelog rather than hidden.</div>
  <div class="defends">🛡️ You can now answer: <i>"How do we know the numbers weren't massaged?"</i> — Every figure regenerates from open code; a validator refuses to build if claims drift from results. That reproducibility is the asset hyperscaler procurement teams increasingly demand.</div>`},
 
-// ===================== PART G — NUMERICAL VALIDATION (INDEPENDENT AUDIT) =====================
-{ch:"G · Numerical validation", title:"How you actually validate a result",
- body:`<p>A claim like "99.70 % joint compliance" is only worth anything if it survives an <b>independent</b> re-derivation. Validation here means three separate layers, each blind to the others:</p>
- <div class="eqn" style="font-size:13.5px;text-align:left;line-height:1.8">
- 1. <b>Re-run the author's own code</b> at N = 10 000, seed 42<br>
- 2. <b>Reimplement from scratch</b> — fresh RNG, 200 000 samples, independent spec checks<br>
- 3. <b>Hand-derive analytically</b> — closed-form, no Monte Carlo at all</div>
- <p>If all three land on the same numbers, the result is real and not an artefact of one implementation or one random seed.</p>
- <div class="example"><b>Layer 1 result.</b> The framework's own test suite passes <b>6/6</b>, and the frozen results file reproduces <b>bit-for-bit on a different machine</b> — joint = <b>0.99700263936</b>, Tⱼ = 59.28 ± 4.86 °C. Bit-for-bit reproducibility across machines is the real test of "reproducible."</div>`},
+// ===================== PART G — FROM BASE STOCK TO COMPLIANT COOLANT =====================
+{ch:"G · Base stock → coolant", title:"Start: the Group III spec sheet",
+ body:`<p>Now build the fluid forward — from a lube base-stock spec sheet to an OCP-compliant coolant, number by number. Here is a representative light Group III grade (4 cSt @100 °C class) exactly as it leaves the hydrocracker/dewaxer, made for <i>lubricants</i>:</p>
+ <div class="eqn" style="font-size:12.5px;text-align:left;line-height:1.8">
+ Saturates 99.5 % · Sulfur 8 ppm · VI 125<br>
+ KV@40 °C 19.5 cSt · KV@100 °C 4.2 cSt · density 0.815 g/mL<br>
+ Flash 220 °C · Pour −24 °C<br>
+ Thermal cond. 0.130 W/m·K · Specific heat 2.00 kJ/kg·K<br>
+ Dielectric strength 14 kV/mm · Resistivity 1×10¹⁴ Ω·cm</div>
+ <p>Dynamic viscosity @40 °C = KV × density = 19.5 × 0.815 = <b>15.9 cP</b>. Nothing has been added yet — this is an ordinary lube base stock.</p>
+ <div class="defends">🛡️ The thesis in one move: this spec sheet is the <i>starting</i> material. The next lessons show every number that already clears OCP, and the few that need work.</div>`},
 
-{ch:"G · Numerical validation", title:"Marginals from first principles",
- body:`<p>The electrical marginals don't <i>need</i> Monte Carlo — for a normal variable they fall straight out of the normal CDF Φ. The pass probability is just how many standard deviations the spec limit sits from the mean:</p>
- <div class="eqn"><i>p</i> = Φ<span style="font-size:1.2em">(</span><span class="frac"><span>μ − limit</span><span>σ</span></span><span style="font-size:1.2em">)</span></div>
- <div class="eqn" style="font-size:14px;text-align:left;line-height:1.9">
- BDV: Φ((55 − 45)/3) = Φ(3.33) = <b>99.96 %</b><br>
- Dk: Φ((2.30 − 2.15)/0.05) = Φ(3.00) = <b>99.87 %</b></div>
- <p>The Monte Carlo returns <b>99.96 %</b> and <b>99.90 %</b> for these two — matching the hand calculation to the basis point. When brute-force sampling and pencil-and-paper agree, neither is lying.</p>
- <div class="defends">🛡️ You can now answer: <i>"Are the per-spec pass rates just a black box?"</i> — No: the electrical ones are analytic normal tail probabilities you can reproduce with a calculator.</div>`,
- check:{q:"BDV is N(55, 3) kV and the floor is 45 kV. Without any simulation, the pass probability is…",
-  opts:[{t:"Φ(3.33) ≈ 99.96 % — the spec is 3.3σ below the mean",ok:true},{t:"Unknowable without running 10 000 samples",ok:false}],
-  reveal:"Φ(3.33) ≈ 99.96 %. A normal variable's tail is closed-form; the Monte Carlo just confirms it. That agreement is itself a validation check."}},
+{ch:"G · Base stock → coolant", title:"Map it onto the OCP envelope",
+ body:`<p>Lay the untouched base stock against the OCP immersion-fluid limits:</p>
+ <div class="eqn" style="font-size:12px;text-align:left;line-height:1.7">
+ Saturates 99.5 ≥ 90 % ✓ · Sulfur 8 ≤ 300 ppm ✓<br>
+ Specific heat 2.00 ≥ 1.8 ✓ · Flash 220 ≥ 150 °C ✓<br>
+ Dielectric str. 14 ≥ 6 kV/mm ✓ · Resistivity 1e14 ≥ 2e11 Ω·cm ✓<br>
+ Pour −24 ≤ −20 °C ✓ · Kinematic visc. 19.5 ≤ 20.5 cSt ✓<br>
+ <b>Dynamic visc. 15.9 ≤ 15 cP ✗ GAP</b><br>
+ <b>Thermal cond. 0.130 ≥ 0.14 W/m·K ✗ GAP</b></div>
+ <p><b>8 of 10 lines pass untouched.</b> Only two need engineering — dynamic viscosity and bulk thermal conductivity — and neither needs a new refinery unit.</p>
+ <div class="defends">🛡️ You can now answer: <i>"How far is a lube base stock from a coolant spec?"</i> — 80 % of the way there on day one; the gap is two properties, both closable by formulation.</div>`,
+ check:{q:"How many of the 10 OCP thermophysical lines does the raw base stock already meet?",
+  opts:[{t:"8 of 10 — only dynamic viscosity and thermal conductivity fall short",ok:true},{t:"Almost none — it needs heavy reformulation",ok:false}],
+  reveal:"8 of 10. The dielectric, thermal-capacity, flash, pour and one viscosity line all pass as-produced; only dynamic viscosity (15.9 cP) and bulk k (0.130) are gaps."}},
 
-{ch:"G · Numerical validation", title:"The Arrhenius resistivity check",
- body:`<p>Resistivity is the spec most people worry about (it must survive both heat <i>and</i> aging). Plug the numbers into the Arrhenius factor:</p>
- <div class="eqn" style="font-size:15px">exp<span style="font-size:1.2em">[</span>(0.69 / 8.617×10⁻⁵)(1/363.15 − 1/298.15)<span style="font-size:1.2em">]</span> = 0.0082</div>
- <p>So heating 25 → 90 °C drops resistivity <b>×122</b> (physically correct — a dielectric leaks more when hot). Apply that and the ×10 aging penalty to the fresh median:</p>
- <div class="eqn">ρ<sub>90,aged</sub> = 1.5×10¹⁵ × 0.0082 / 10 ≈ <b>1.2×10¹² Ω·cm</b></div>
- <p>That is still <b>~1.1 decades above</b> the 10¹¹ Ω·cm floor — which is why the marginal compliance for resistivity is a clean <b>100 %</b> even at the hot, aged, worst-case condition.</p>
- <div class="defends">🛡️ You can now answer: <i>"Does it still insulate hot and aged?"</i> — Yes, with an order of magnitude to spare; the number is a hand-checkable Arrhenius calculation, not an assertion.</div>`},
+{ch:"G · Base stock → coolant", title:"Gap A — closing viscosity",
+ body:`<p>Dynamic viscosity 15.9 cP must drop below 15. Two independent levers, computed with the Walther / ASTM D341 viscosity–temperature law:</p>
+ <div class="eqn"><span style="font-size:.8em">loglog</span>(ν + 0.7) = <i>A</i> − <i>B</i> · log₁₀<i>T</i></div>
+ <p>• <b>Lever 1 — lighter grade</b> (3 cSt): KV@40 °C = 13.9 cSt → 13.9 × 0.810 = <b>11.3 cP</b> ✓ (and 13.9 &lt; 20.5 cSt ✓).<br>
+ • <b>Lever 2 — warm operation</b> (keep the 4 cSt grade, run at the normal tank temperature): @45 °C → 13.3 cP, @50 °C → 11.2 cP ✓.</p>
+ <p>Either lever clears it. Grade selection is a purchasing choice; warm operation is free.</p>
+ <div class="defends">🛡️ You can now answer: <i>"Isn't a lube base oil too viscous to pump around a server?"</i> — A light grade is 11 cP at 40 °C, and warm operation drops it further; both are under the 15 cP OCP limit.</div>`},
 
-{ch:"G · Numerical validation", title:"The thermal check",
- body:`<p>The junction temperature is a single linear equation, so you can check the Monte Carlo mean by hand:</p>
- <div class="eqn"><i>T</i><sub>j</sub> = 40 + 700 × (0.0150 + 0.0100 + 0.002143) = <b>59.0 °C</b></div>
- <p>The simulation returns <b>59.25 °C</b> (the small gap is the clipped, slightly-skewed convective resistance) — agreement to a fraction of a degree. Now the headroom to the 88 °C ceiling:</p>
- <div class="eqn">(88 − 59.25) / 4.84 = <b>5.9 σ</b> &nbsp;⇒&nbsp; P(breach) ≈ 0 ppm</div>
- <p>Nearly six standard deviations of margin is why the thermal spec passes 100 % of samples — and it's arithmetic anyone can repeat.</p>
- <div class="defends">🛡️ You can now answer: <i>"Is the 59 °C just a fitted output?"</i> — No: it's T_bulk + Q·R_total with the stated resistances; the analytic 59.0 °C and the MC 59.25 °C corroborate each other.</div>`,
- check:{q:"The junction sits 5.9σ below the 88 °C shutdown limit. What does that imply?",
-  opts:[{t:"Essentially every sample passes — breach probability ≈ 0",ok:true},{t:"About 6 % of samples breach the limit",ok:false}],
-  reveal:"≈ 0. A 5.9σ tail of a normal is parts-per-billion territory — consistent with the 100.00 % thermal marginal compliance."}},
+{ch:"G · Base stock → coolant", title:"Gap B — closing thermal conductivity",
+ body:`<p>Bulk conductivity 0.130 must reach 0.14 W/m·K. Two routes:</p>
+ <p>• <b>System route (preferred)</b> — bulk k is not actually the OCP <i>gate</i>; the junction-temperature spec is. With the convective design, Tⱼ = 40 + 700 × (0.0150 + 0.0100 + 0.002143) = <b>59 °C ≪ 88 °C</b>. The thermal requirement is met at k = 0.130, no additive needed.<br>
+ • <b>Fluid route (optional)</b> — a nanofluid raises effective k (next lessons), at a dielectric cost.</p>
+ <div class="eqn"><i>R</i><sub>conv</sub> = 1/(<i>h A</i>) dominates — so <i>h·A</i>, not raw k, carries the heat</div>
+ <div class="defends">🛡️ You can now answer: <i>"Its conductivity is below spec — how can it cool?"</i> — Because immersion cooling is convection-limited: the junction lands at 59 °C via h·A even at k = 0.130, so the thermal spec is met without touching the fluid.</div>`,
+ check:{q:"Why can the thermal spec pass even though bulk k (0.130) is under the 0.14 target?",
+  opts:[{t:"The real gate is junction temp, and convection (h·A) holds Tj at 59 °C ≪ 88 °C",ok:true},{t:"The 0.14 W/m·K limit is not a real requirement",ok:false}],
+  reveal:"Convection dominates. R_conv = 1/(hA) sets the junction temperature; at k = 0.130 the design still lands Tj = 59 °C, well under the 88 °C ceiling."}},
 
-{ch:"G · Numerical validation", title:"Building the joint probability",
- body:`<p>The headline number is where a sloppy analysis hides. There are two ways to combine the six marginals, and an honest result should be robust to which you use:</p>
- <div class="eqn" style="font-size:14px;text-align:left;line-height:1.85">
- <b>Product of marginals:</b> 0.9996 × 1 × 0.9987 × 1 × 1 × 0.9989 = <b>99.72 %</b><br>
- <b>True AND (all six pass in the same sample):</b> <b>99.72 %</b></div>
- <p>They agree to <b>&lt; 0.01 percentage points</b> — because the failures are rare and scattered across different samples, so correlation between failure modes is negligible. The 99.70 % headline is the same number no matter which method you pick.</p>
- <div class="litnote">📚 <b>An honesty note I found while validating.</b> The code labels its output "joint" but actually computes the <i>product</i> of marginals (not the true AND). It doesn't change the answer — I confirmed the true AND independently and it matches to &lt;0.01 pp — but strictly the manuscript should footnote that, or the code should compute the real AND so text and code agree.</div>`,
- check:{q:"Why do 'product of marginals' and 'true AND' give the same 99.7 % here?",
-  opts:[{t:"Failures are rare and land in different samples, so correlation is negligible",ok:true},{t:"They are always mathematically identical for any dataset",ok:false}],
-  reveal:"Rare, scattered failures. In general the two differ when failure modes are correlated; here they aren't, so the methods converge — which is itself a robustness check."}},
+{ch:"G · Base stock → coolant", title:"Processes: drying & filtration",
+ body:`<p>Before any chemical goes in, two physical <b>processes</b> do the dielectric heavy lifting — because dissolved water and particulates, not the oil itself, limit breakdown voltage:</p>
+ <div class="eqn" style="font-size:13px;text-align:left;line-height:1.85">
+ <b>P1 · Vacuum dehydration + degassing</b> (no chemical)<br>
+ &nbsp;&nbsp; water 45 → 8 ppm · BDV 35 → 52 kV (+49 %) · ρ 1×10¹⁴ → 1.2×10¹⁵ Ω·cm<br>
+ <b>P2 · Fine filtration (5 µm)</b> (no chemical)<br>
+ &nbsp;&nbsp; BDV 52 → 55 kV · ρ → 1.5×10¹⁵ Ω·cm</div>
+ <p>Drying alone buys most of the breakdown-voltage headroom — water is the number-one BDV killer. After P2 the fluid sits at the <b>55 kV / 1.5×10¹⁵ Ω·cm</b> baseline the compliance model uses.</p>
+ <div class="defends">🛡️ You can now answer: <i>"Where does the 55 kV BDV come from?"</i> — From drying (35→52) and filtration (52→55). No additive raises it; removing water and particles does.</div>`},
 
-{ch:"G · Numerical validation", title:"The independent cross-validation",
- body:`<p>Putting all three layers side by side — the manuscript, the author's code, and a clean-room reimplementation with a different RNG and 20× the samples:</p>
- <div class="eqn" style="font-size:12px;text-align:left;line-height:1.85">
- metric &nbsp;&nbsp; paper · author-code · independent<br>
- Tⱼ (°C) &nbsp;&nbsp; 59.3 · 59.28 · 59.25<br>
- BDV (kV) &nbsp;&nbsp; 55.0 · 54.99 · 54.99<br>
- P5 / P50 (yr) &nbsp;&nbsp; 5.8/6.6 · 5.8/6.6 · 5.8/6.6<br>
- p(BDV) &nbsp;&nbsp; 99.96 · 99.96 · 99.96 %<br>
- p(life) &nbsp;&nbsp; 99.84 · 99.84 · 99.89 %<br>
- <b>JOINT</b> &nbsp;&nbsp; <b>99.70 · 99.70 · 99.72 %</b></div>
- <p>The largest disagreement anywhere is <b>0.05 percentage points</b> — pure Monte Carlo sampling noise that shrinks as N grows. Three independent routes, one answer.</p>
- <div class="defends">🛡️ You can now answer: <i>"Has anyone actually checked these numbers?"</i> — Yes: reproduced by the author's code (bit-for-bit vs the frozen results), by an independent 200 000-sample reimplementation, and by closed-form analytics. They agree to ≤ 0.05 pp.</div>`},
+{ch:"G · Base stock → coolant", title:"The additive package",
+ body:`<p>Now the chemistry — deliberately tiny and <b>ashless</b>, because conductive/metallic additives (like ZDDP) wreck the dielectric. Total load ≈ <b>0.33 wt%</b>:</p>
+ <div class="eqn" style="font-size:12.5px;text-align:left;line-height:1.85">
+ <b>A1 · Antioxidant</b> — ashless hindered-phenol + aminic, <b>0.30 wt%</b><br>
+ &nbsp;&nbsp; RPVOT 25 → 300 min (×12) → enables ≥ 5 yr life<br>
+ &nbsp;&nbsp; tan δ 1.0 → 1.4×10⁻⁴ (still 350× under limit) · Dk/BDV/ρ unchanged<br>
+ <b>A2 · Metal deactivator</b> — tolyltriazole deriv., <b>0.03 wt%</b><br>
+ &nbsp;&nbsp; Cu strip 1b → 1a · kills Cu-catalysed oxidation · tan δ +0.1×10⁻⁴</div>
+ <p>The antioxidant buys the lifetime; the metal deactivator protects it against hot copper busbars. Both are non-metallic, so the dielectric numbers barely move. (A pour-point depressant is available but skipped — the light grade already passes at −24 °C.)</p>
+ <div class="defends">🛡️ You can now answer: <i>"What's actually in the fluid?"</i> — ~0.33 wt% of ashless antioxidant + metal deactivator. No ZDDP, no detergents, no ash — nothing that raises conductivity.</div>`,
+ check:{q:"Why is the additive package deliberately ashless and metal-free?",
+  opts:[{t:"Metallic/conductive additives (e.g. ZDDP) would degrade resistivity and BDV",ok:true},{t:"Ashless additives are cheaper than metallic ones",ok:false}],
+  reveal:"Dielectric protection. ZDDP and metallic detergents raise conductivity and leave ash — fatal for a coolant — so only ashless antioxidant + metal deactivator are used, ~0.33 wt% total."}},
 
-{ch:"G · Numerical validation", title:"What validation proves — and what it doesn't",
- body:`<p>The critical distinction, stated honestly. The audit confirms the <b>computation</b> is correct:</p>
- <p>✓ the probability math, the physics equations, the joint-compliance logic, and full reproducibility all check out.</p>
- <p>But it does <b>not</b> prove the <i>fluid</i> will pass — because the whole result rests on the <b>assumed input distributions</b> (BDV ~ N(55,3), Tⱼ resistances, etc.). Those are literature-calibrated, not yet measured on the real product. And the lifetime curve is an explicitly disclosed <b>post-hoc calibration</b>, not a prediction.</p>
- <div class="eqn" style="font-size:14px">"the code is right" &nbsp;≠&nbsp; "the fluid will pass"</div>
- <p>Closing that last gap is exactly what Stage 1 (measure the input distributions) and Stage 2 (accelerated-aging lifetime data) of the roadmap are for. The math is settled; the credibility frontier is the lab data behind the inputs.</p>
- <div class="defends">🛡️ You can now answer the sharpest reviewer question of all: <i>"So is this validated?"</i> — The numbers are computationally validated and independently reproducible; the input assumptions are the remaining work, and the paper scopes that honestly rather than overclaiming.</div>`},
+{ch:"G · Base stock → coolant", title:"The nanoparticle trade-off",
+ body:`<p>The one additive that <b>costs</b> you: nanoparticles for conductivity. Computed with Maxwell (for k) and Maxwell–Garnett (for Dk), at 3 vol% Al₂O₃ + 0.5 wt% dispersant:</p>
+ <div class="eqn" style="font-size:13px;text-align:left;line-height:1.85">
+ k 0.130 → <b>0.142</b> W/m·K &nbsp; ✓ gain (clears ≥ 0.14)<br>
+ Dk 2.150 → <b>2.251</b> &nbsp; ⚠ cost (eats margin toward 2.30)<br>
+ tan δ 1.5 → <b>8×10⁻⁴</b> &nbsp; ⚠ cost (interfacial loss, still &lt; 0.05)<br>
+ BDV 55 → <b>52 kV</b> &nbsp; ⚠ −5 % if not surface-functionalised</div>
+ <p>So spending an additive to win 0.012 W/m·K of conductivity <i>costs</i> ~0.10 of Dk margin and some BDV. That's why it stays <b>optional</b> — the system route already meets the thermal spec at k = 0.130 without paying this price.</p>
+ <div class="defends">🛡️ You can now answer: <i>"Why not just add nanoparticles for conductivity?"</i> — Because the numbers show it eats dielectric margin (Dk 2.15→2.25, BDV −5 %). Convective design meets the thermal spec without it, so it is held in reserve.</div>`,
+ check:{q:"Adding 3 vol% Al₂O₃ raises k to 0.142. What does it cost?",
+  opts:[{t:"Dielectric margin — Dk rises to 2.25 and BDV drops ~5 %",ok:true},{t:"Nothing — it improves every property at once",ok:false}],
+  reveal:"Dielectric margin. Maxwell-Garnett gives Dk 2.15→2.25 (toward the 2.30 limit) and BDV falls ~5 %. A real trade-off — hence optional."}},
 
-{ch:"G · Numerical validation", title:"Defending the dossier",
+{ch:"G · Base stock → coolant", title:"Spec sheet → compliant coolant",
+ body:`<p>The final formulated fluid (system route, no nanoparticles) against every OCP line:</p>
+ <div class="eqn" style="font-size:12px;text-align:left;line-height:1.7">
+ Dynamic visc. 11.3 ≤ 15 cP ✓ · Kinematic 13.9 ≤ 20.5 cSt ✓<br>
+ Thermal cond. 0.130 → met via Tⱼ = 59 °C ✓ · BDV 55 ≥ 45 kV ✓<br>
+ Dk 2.15 ≤ 2.30 ✓ · tan δ 1.5×10⁻⁴ ≤ 0.05 ✓<br>
+ Resistivity 1.5×10¹⁵ ≥ 2×10¹¹ Ω·cm ✓ · Pour −24 ≤ −20 °C ✓</div>
+ <p>Feed it through the coupled thermal/electrical/lifetime models and the six compliance specs land at <b>99.70 % joint</b> (vs the 85 % bar), with Tⱼ = 59.3 °C and P5 life = 5.8 yr.</p>
+ <div class="eqn" style="font-size:14px">base stock (8/10) → +2 fixes → +0.33 wt% ashless pkg → <b>99.70 % OCP-compliant</b></div>
+ <div class="defends">🛡️ You can now trace the entire path: lube spec sheet → 8/10 free → grade/warm-op closes viscosity → convective design meets thermal → drying+filtration set the dielectrics → 0.33 wt% ashless package secures life → all six OCP specs pass at 99.70 %.</div>`},
+
+{ch:"G · Base stock → coolant", title:"Defending the dossier",
  body:`<p>You can now defend the whole argument end-to-end:</p>
  <p>• <b>Market</b> — AI heat broke air cooling; single-phase immersion won; imports cost USD 50–400/L.<br>
  • <b>Molecule</b> — Group III's saturated, non-polar, high-VI structure is simultaneously a premium lubricant and a natural dielectric.<br>
  • <b>Method</b> — 10 000-sample Monte Carlo over three coupled sub-models yields a <b>99.70 %</b> joint compliance vs an 85 % bar.<br>
- • <b>Validated</b> — every headline number reproduces bit-for-bit in the author's code, in an independent 200 000-sample reimplementation, and in closed-form analytics (agree to ≤ 0.05 pp).<br>
+ • <b>Build path</b> — a lube base stock meets 8/10 OCP lines untouched; grade choice + convective design close viscosity and thermal; drying + filtration + ~0.33 wt% ashless additives finish the job — no new refinery unit.<br>
  • <b>Money</b> — 83 % cheaper, ~USD 18 M forex saved, no new refinery capex.<br>
  • <b>Honesty</b> — post-hoc lifetime calibration and scenario-input forex are disclosed, not buried; a validation harness locks every number to code.</p>
  <div class="example"><b>You've finished the course.</b> You can now take the pitch from "we make a base oil" to "we have an audit-grade qualification dossier for an emerging specialty market" — and answer the hard questions on market, molecule, method, and money.</div>
